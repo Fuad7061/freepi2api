@@ -1,0 +1,22 @@
+services:
+  freepi2api:
+    build: .
+    container_name: freepi2api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8787}:8787"
+    volumes:
+      - freepi_data:/app/data
+    environment:
+      - PORT=8787
+      - HOST=0.0.0.0
+      - BRIDGE_API_KEY=${BRIDGE_API_KEY:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - FREEPI_BASE_URL=${FREEPI_BASE_URL:-https://api.freepi.ai}
+      - AUTO_AD=${AUTO_AD:-1}
+      - AD_INTERVAL_SECS=${AD_INTERVAL_SECS:-300}
+      - LOG_RETENTION_DAYS=${LOG_RETENTION_DAYS:-10}
+
+volumes:
+  freepi_data:
+    name: freepi2api_data

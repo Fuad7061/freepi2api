@@ -1,0 +1,20 @@
+{
+  "name": "freepi2api",
+  "version": "1.0.0",
+  "description": "Multi-Account FreePi AI Gateway & Management Dashboard for Coolify & Docker",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fuad7061/freepi2api.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "Fuad",
+  "license": "MIT"
+}

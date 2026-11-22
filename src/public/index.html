@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreePi Bridge & Account Pool Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.88);
+      --card-bg-hover: rgba(26, 34, 53, 0.95);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --code-bg: #0b0f19;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      background-image: 
+        radial-gradient(circle at 12% 15%, rgba(59, 130, 246, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at 88% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 45%);
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 22px;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+
+    /* Stats Grid */
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      backdrop-filter: blur(12px);
+    }
+
+    .stat-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(12px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-success { background: #10b981; color: #fff; }
+    .btn-success:hover { background: #059669; }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* Account table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    th {
+      padding: 12px 14px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td { padding: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .tag-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .tag-cooling { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .tag-disabled { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
+    .tag-exhausted { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+    .progress-bar {
+      width: 120px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #111827;
+      border: 1px solid var(--border-hover);
+      border-radius: 14px;
+      max-width: 520px;
+      width: 90%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1f2937;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    /* Terminal */
+    .terminal {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      height: 400px;
+      overflow-y: auto;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-line { margin-bottom: 6px; line-height: 1.4; }
+    .log-time { color: #64748b; }
+    .log-INFO { color: #38bdf8; }
+    .log-WARN { color: #fbbf24; }
+    .log-ERROR { color: #f87171; }
+
+    /* Chat Playground */
+    .chat-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      min-height: 250px;
+      max-height: 450px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .chat-bubble {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      max-width: 82%;
+      font-size: 14px;
+    }
+    .chat-user { background: #1e3a8a; margin-left: auto; }
+    .chat-assistant { background: #1e293b; margin-right: auto; white-space: pre-wrap; }
+
+    /* Code Snippets & Docs */
+    .code-snippet {
+      position: relative;
+      background: var(--code-bg);
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .copy-btn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+    .banner {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Model Cards Grid in Playground */
+    .models-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .model-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .model-card:hover {
+      background: var(--card-bg-hover);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .model-card.selected {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.12);
+    }
+    .model-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .model-meta { font-size: 11px; color: var(--text-muted); }
+
+    /* Admin Auth Gate Screen */
+    #adminGateScreen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #090d16;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .gate-card {
+      background: #111827;
+      border: 1px solid var(--border-hover);
+      border-radius: 16px;
+      max-width: 420px;
+      width: 90%;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Admin Gate Lockscreen -->
+  <div id="adminGateScreen">
+    <div class="gate-card">
+      <div style="font-size: 40px; margin-bottom: 12px;">🔒</div>
+      <h2 style="font-size: 20px; margin-bottom: 8px;">Admin Dashboard Protected</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+        Public access is restricted. Please enter the Admin Dashboard Key to manage this bridge.
+      </p>
+      <div class="form-group" style="text-align: left;">
+        <label>Admin Dashboard Key</label>
+        <input type="password" id="gateKeyInput" placeholder="Enter key..." onkeydown="if(event.key==='Enter') verifyAndUnlockGate()">
+      </div>
+      <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="verifyAndUnlockGate()">
+        Unlock Dashboard
+      </button>
+      <div id="gateErrorMsg" style="color: var(--danger); font-size: 13px; margin-top: 12px; display: none;"></div>
+    </div>
+  </div>
+
+  <div class="container" id="mainDashboardView">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo-icon">π</div>
+        <div>
+          <h1>FreePi Bridge Manager</h1>
+          <p style="font-size: 13px; color: var(--text-muted);">Multi-Account AI Gateway & Pool Balancer</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div class="status-badge">
+          <span class="pulse"></span>
+          <span id="gatewayStatus">Bridge Online</span>
+        </div>
+        <div id="adminSecurityBadge" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);">
+          Admin: Public
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="fetchStatus()">Refresh</button>
+        <button class="btn btn-secondary btn-sm" id="btnAdminLock" style="display: none;" onclick="lockAdminSession()">Lock</button>
+      </div>
+    </header>
+
+    <!-- Quick Stats -->
+    <div class="grid-stats">
+      <div class="stat-card">
+        <div class="stat-title">Active Accounts</div>
+        <div class="stat-value" id="statActiveAccounts">0 / 0</div>
+        <div class="stat-sub">Ready in pool</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Requests</div>
+        <div class="stat-value" id="statTotalRequests">0</div>
+        <div class="stat-sub" id="statSuccessRate">100% success</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Daily Credits</div>
+        <div class="stat-value" id="statRemainingCredits">-</div>
+        <div class="stat-sub">Pool balance</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Bridge API Key</div>
+        <div class="stat-value" id="statBridgeKeyBadge" style="font-size: 18px; color: #38bdf8;">None</div>
+        <div class="stat-sub" id="statBridgeKeySub">Open access</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('accounts')">Accounts Pool</button>
+      <button class="tab-btn" onclick="switchTab('playground')">Chat Playground & Models</button>
+      <button class="tab-btn" onclick="switchTab('settings')">API Keys & Security</button>
+      <button class="tab-btn" onclick="switchTab('docs')">cURL & Documentation</button>
+      <button class="tab-btn" onclick="switchTab('logs')">Live Logs</button>
+    </div>
+
+    <!-- Tab 1: Accounts Pool -->
+    <div id="tab-accounts" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">FreePi Account Pool</div>
+            <p style="font-size: 13px; color: var(--text-muted);">Requests are automatically load-balanced across accounts with instant retry on rate limits.</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-success" onclick="openOAuthLoginModal()">⚡ Connect via FreePi (Auto-Import)</button>
+            <button class="btn btn-secondary" onclick="openAddAccountModal()">+ Manual Token</button>
+          </div>
+        </div>
+
+        <div class="banner" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.25);">
+          🔗 <strong>Direct Auto-Login URL:</strong> You can visit or bookmark <a href="/login" target="_blank" style="color: #38bdf8; text-decoration: underline; margin-left: 4px; font-weight: 600;">/login</a> (e.g. <code>http://localhost:8787/login</code>) to instantly authenticate with GitHub and auto-import an account!
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Status</th>
+                <th>Credits Today</th>
+                <th>Requests</th>
+                <th>Ad Impression</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="accountsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  Loading accounts...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Playground & Models -->
+    <div id="tab-playground" class="tab-content" style="display: none;">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">AI Completion Playground</div>
+            <p style="font-size: 13px; color: var(--text-muted);">Test model completions through your bridge pool in real-time.</p>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div>
+              <label style="margin: 0; font-size: 12px;">Active Model:</label>
+              <select id="playgroundModel" style="width: auto; min-width: 220px;">
+                <option value="particle">particle (default)</option>
+              </select>
+            </div>
+            <div>
+              <label style="margin: 0; font-size: 12px;">Temp: <span id="tempVal">0.7</span></label>
+              <input type="range" id="tempSlider" min="0" max="2" step="0.1" value="0.7" style="width: 100px;" oninput="document.getElementById('tempVal').innerText=this.value">
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 14px;">
+              <input type="checkbox" id="streamToggle" checked>
+              <label for="streamToggle" style="margin: 0; font-size: 13px; cursor: pointer;">Stream SSE</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>System Prompt (Optional)</label>
+          <input type="text" id="playgroundSystem" placeholder="e.g. You are a helpful software engineering assistant...">
+        </div>
+
+        <div class="chat-box" id="chatBox">
+          <div class="chat-bubble chat-assistant">Hello! How can I assist you today? You can select any FreePi model below to test.</div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="playgroundInput" placeholder="Type a message (e.g. Write a quick sort function in Python)..." onkeydown="if(event.key==='Enter') sendPlaygroundMessage()">
+          <button class="btn btn-primary" id="btnPlaygroundSend" onclick="sendPlaygroundMessage()">Send</button>
+        </div>
+
+        <!-- Available Models Catalog -->
+        <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 20px;">
+          <div class="panel-header" style="margin-bottom: 12px;">
+            <div>
+              <div style="font-size: 16px; font-weight: 600;">Available FreePi Models Catalog (<span id="modelsCountBadge">28</span> models)</div>
+              <p style="font-size: 12px; color: var(--text-muted);">Click any model card to immediately select it for testing above.</p>
+            </div>
+            <input type="text" id="modelSearchInput" placeholder="Filter models (e.g. deepseek, gemini, qwen, uncensored)..." style="width: 260px;" oninput="filterModelsCatalog()">
+          </div>
+
+          <div class="models-grid" id="modelsGridContainer">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: API Keys & Security Settings -->
+    <div id="tab-settings" class="tab-content" style="display: none;">
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom: 8px;">API Keys & Security Configuration</div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">
+          Configure security credentials to protect both your public OpenAI API and this Admin Dashboard.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          <!-- Bridge API Key -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 10px; padding: 20px;">
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">Client Bridge API Key</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              When set, external apps (Cursor, Cline, OpenAI SDK) must send this key in <code>Authorization: Bearer &lt;key&gt;</code> or <code>x-api-key</code>.
+            </p>
+            <div class="form-group">
+              <label>Bridge API Key</label>
+              <input type="text" id="cfgBridgeKey" placeholder="e.g. sk-my-secret-key (leave empty for open access)">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveBridgeKey()">Save Bridge Key</button>
+          </div>
+
+          <!-- Admin Dashboard Key -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 10px; padding: 20px;">
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">Admin Dashboard Key (Access Control)</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              Protects this Web Dashboard at <code>/</code> and management APIs. If set, unauthorized visitors cannot view accounts or logs.
+            </p>
+            <div class="form-group">
+              <label>Admin Dashboard Key</label>
+              <input type="password" id="cfgAdminKey" placeholder="Enter password to secure dashboard (leave empty to disable)">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-primary btn-sm" onclick="saveAdminKey()">Update Admin Key</button>
+              <button class="btn btn-danger btn-sm" onclick="clearAdminKey()">Disable Security</button>
+            </div>
+          </div>
+
+          <!-- Maintenance & Retention -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 10px; padding: 20px;">
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">Automated Maintenance & Storage</div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              Auto-Ad keeps free-tier accounts warm; Log retention keeps disk space lean on your VPS.
+            </p>
+            <div class="form-group">
+              <label>Log Retention (Days)</label>
+              <input type="text" id="cfgRetentionDays" value="10" placeholder="10">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+              <input type="checkbox" id="cfgAutoAd" checked>
+              <label for="cfgAutoAd" style="margin: 0; font-size: 13px; cursor: pointer;">Enable Background Ad Keepalive (Recommended)</label>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="saveMaintenanceSettings()">Save Maintenance Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Documentation & cURL -->
+    <div id="tab-docs" class="tab-content" style="display: none;">
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom: 8px;">API Documentation & Code Examples</div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+          Connect any AI application or code library to this bridge. All endpoints are 100% OpenAI & Anthropic compatible.
+        </p>
+
+        <!-- cURL Section -->
+        <h3 style="font-size: 16px; margin-top: 16px; margin-bottom: 8px; color: #38bdf8;">1. Chat Completions cURL (Standard)</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Standard JSON completion response:</p>
+        <div class="code-snippet">
+          <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+curl <span class="doc-base-url">http://localhost:8787</span>/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <span class="doc-api-key">sk-freepi</span>" \
+  -d '{
+    "model": "particle",
+    "messages": [
+      {"role": "user", "content": "Write a 2-line poem about computing."}
+    ]
+  }'
+        </div>
+
+        <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #38bdf8;">2. Streaming Response cURL (Real-Time SSE)</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Streams tokens immediately as they are generated by upstream:</p>
+        <div class="code-snippet">
+          <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+curl -N <span class="doc-base-url">http://localhost:8787</span>/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <span class="doc-api-key">sk-freepi</span>" \
+  -d '{
+    "model": "deepseek-v4.1-flash",
+    "messages": [
+      {"role": "user", "content": "Explain binary search in 3 sentences."}
+    ],
+    "stream": true
+  }'
+        </div>
+
+        <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #38bdf8;">3. List Available Models cURL</h3>
+        <div class="code-snippet">
+          <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+curl <span class="doc-base-url">http://localhost:8787</span>/v1/models \
+  -H "Authorization: Bearer <span class="doc-api-key">sk-freepi</span>"
+        </div>
+
+        <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #38bdf8;">4. Python Integration (OpenAI SDK)</h3>
+        <div class="code-snippet">
+          <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="<span class="doc-base-url">http://localhost:8787</span>/v1",
+    api_key="<span class="doc-api-key">sk-freepi</span>"
+)
+
+response = client.chat.completions.create(
+    model="particle",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+
+print(response.choices[0].message.content)
+        </div>
+
+        <h3 style="font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: #38bdf8;">5. Cursor / Cline / LibreChat Setup</h3>
+        <div class="code-snippet">
+          <button class="copy-btn" onclick="copySnippet(this)">Copy</button>
+Provider:      OpenAI Compatible
+Base URL:      <span class="doc-base-url">http://localhost:8787</span>/v1
+API Key:       <span class="doc-api-key">sk-freepi</span> (or your configured BRIDGE_API_KEY)
+Model Names:   particle, deepseek-v4.1-flash, gemini-4-carbon, gpt-6.2-astra, qwen3.7-flash
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Logs -->
+    <div id="tab-logs" class="tab-content" style="display: none;">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">System & Request Logs</div>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Storage Protection: Log files older than 10 days are automatically deleted.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <select id="logLevelFilter" style="width: auto;" onchange="fetchLogs()">
+              <option value="ALL">All Levels</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+            <input type="text" id="logSearch" placeholder="Search logs..." style="width: 150px;" oninput="fetchLogs()">
+            <button class="btn btn-secondary btn-sm" onclick="fetchLogs()">Refresh</button>
+            <button class="btn btn-danger btn-sm" onclick="clearServerLogs()">Clear</button>
+          </div>
+        </div>
+
+        <div class="terminal" id="logsTerminal">Loading logs...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-Click OAuth Modal -->
+  <div class="modal-backdrop" id="oauthModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 22px;">⚡</span> One-Click FreePi Sign-In & Import
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Click the button below to authorize with GitHub. As soon as you grant access, the bridge will automatically capture your token and import your account into the pool!
+      </p>
+
+      <div class="form-group" id="oauthLabelGroup">
+        <label>Account Label / Name (Optional)</label>
+        <input type="text" id="oauthAccName" placeholder="e.g. My Personal GitHub">
+      </div>
+
+      <div id="oauthLoadingState" style="display: none; padding: 20px 0; text-align: center;">
+        <div style="margin-bottom: 12px; font-weight: 600; font-size: 16px; color: #38bdf8;" id="oauthStatusText">
+          Opening FreePi authorization window...
+        </div>
+        <div id="oauthCodeBox" style="display: none; margin: 14px auto; background: #1e293b; padding: 10px 16px; border-radius: 8px; font-family: monospace; font-size: 18px; font-weight: 700; color: #fbbf24; border: 1px dashed rgba(251, 191, 36, 0.4); max-width: 240px; letter-spacing: 2px;">
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Waiting for confirmation... Please approve in the opened tab.
+        </p>
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Didn't open automatically? <a id="oauthFallbackLink" href="#" target="_blank" style="color: var(--accent); text-decoration: underline;">Click here to sign in</a>.
+        </div>
+      </div>
+
+      <div id="oauthSuccessState" style="display: none; padding: 20px 0; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 8px;">🎉</div>
+        <div style="font-weight: 700; font-size: 16px; color: var(--success);" id="oauthSuccessMsg">
+          Successfully Connected & Imported!
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
+          Account is now active and ready for AI completions.
+        </p>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeOAuthLoginModal()">Close</button>
+        <button class="btn btn-primary" id="btnStartOAuth" onclick="executeOAuthStart()">Authorize with GitHub</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Add Account Modal -->
+  <div class="modal-backdrop" id="addAccountModal">
+    <div class="modal">
+      <div class="modal-title">Add FreePi Account to Pool</div>
+      <div class="form-group">
+        <label>Account Label / Name</label>
+        <input type="text" id="accName" placeholder="e.g. Primary GitHub Account">
+      </div>
+      <div class="form-group">
+        <label>FreePi Token (JWT)</label>
+        <textarea id="accToken" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsIn..."></textarea>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+          Paste your FreePi JWT token from <code>~/.free-pi/agent/credentials.json</code>.
+        </p>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeAddAccountModal()">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveAccount" onclick="saveNewAccount()">Verify & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeTab = 'accounts';
+    let oauthPollTimer = null;
+    let allModelsList = [];
+    let currentAdminKey = localStorage.getItem('freepi_admin_key') || '';
+
+    function getAdminHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentAdminKey) {
+        headers['x-admin-password'] = currentAdminKey;
+        headers['Authorization'] = `Bearer ${currentAdminKey}`;
+      }
+      return headers;
+    }
+
+    async function checkAdminGate() {
+      try {
+        const res = await fetch('/api/auth/admin-check');
+        const data = await res.json();
+        const gateScreen = document.getElementById('adminGateScreen');
+        const badge = document.getElementById('adminSecurityBadge');
+        const lockBtn = document.getElementById('btnAdminLock');
+
+        if (data.required) {
+          badge.innerText = 'Admin: Secured 🔒';
+          badge.style.color = '#38bdf8';
+          lockBtn.style.display = 'inline-flex';
+
+          // Check if stored key works
+          if (currentAdminKey) {
+            const vRes = await fetch('/api/auth/verify-admin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: currentAdminKey })
+            });
+            if (vRes.ok) {
+              gateScreen.style.display = 'none';
+              return true;
+            }
+          }
+          gateScreen.style.display = 'flex';
+          return false;
+        } else {
+          badge.innerText = 'Admin: Public ⚠️';
+          badge.style.color = 'var(--warning)';
+          lockBtn.style.display = 'none';
+          gateScreen.style.display = 'none';
+          return true;
+        }
+      } catch (e) {
+        return true;
+      }
+    }
+
+    async function verifyAndUnlockGate() {
+      const input = document.getElementById('gateKeyInput');
+      const errBox = document.getElementById('gateErrorMsg');
+      const key = input.value.trim();
+      errBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/verify-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: key })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.valid) {
+          errBox.innerText = data.error || 'Invalid Admin Key';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        currentAdminKey = key;
+        localStorage.setItem('freepi_admin_key', key);
+        document.getElementById('adminGateScreen').style.display = 'none';
+        fetchStatus();
+        loadSettings();
+      } catch (err) {
+        errBox.innerText = 'Network error: ' + err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    function lockAdminSession() {
+      localStorage.removeItem('freepi_admin_key');
+      currentAdminKey = '';
+      checkAdminGate();
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      
+      const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tab));
+      if (targetBtn) targetBtn.classList.add('active');
+      
+      const targetContent = document.getElementById(`tab-${tab}`);
+      if (targetContent) targetContent.style.display = 'block';
+
+      if (tab === 'logs') {
+        fetchLogs();
+      } else if (tab === 'playground') {
+        loadModels();
+      } else if (tab === 'settings') {
+        loadSettings();
+      } else if (tab === 'docs') {
+        updateDocsSnippets();
+      }
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status', { headers: getAdminHeaders() });
+        if (res.status === 401) {
+          checkAdminGate();
+          return;
+        }
+        const data = await res.json();
+        
+        document.getElementById('statActiveAccounts').innerText = `${data.activeAccounts} / ${data.totalAccounts}`;
+        document.getElementById('statTotalRequests').innerText = data.totalChatRequests;
+        const total = data.totalChatRequests;
+        const success = data.totalChatSuccess;
+        const rate = total > 0 ? Math.round((success / total) * 100) : 100;
+        document.getElementById('statSuccessRate').innerText = `${rate}% success rate`;
+
+        if (data.config.hasBridgeKey) {
+          document.getElementById('statBridgeKeyBadge').innerText = 'Protected 🔑';
+          document.getElementById('statBridgeKeySub').innerText = 'Key required';
+        } else {
+          document.getElementById('statBridgeKeyBadge').innerText = 'Open Access';
+          document.getElementById('statBridgeKeySub').innerText = 'No key needed';
+        }
+
+      } catch (e) {
+        document.getElementById('gatewayStatus').innerText = 'Bridge Error';
+      }
+      fetchAccounts();
+    }
+
+    async function fetchAccounts() {
+      try {
+        const res = await fetch('/api/accounts', { headers: getAdminHeaders() });
+        if (res.status === 401) return;
+        const data = await res.json();
+        const tbody = document.getElementById('accountsTableBody');
+        
+        if (!data.accounts || data.accounts.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                No accounts in pool yet. Click <strong>⚡ Connect via FreePi (Auto-Import)</strong> to add your first account!
+              </td>
+            </tr>
+          `;
+          document.getElementById('statRemainingCredits').innerText = '0';
+          return;
+        }
+
+        let totalCredits = 0;
+        tbody.innerHTML = data.accounts.map(acc => {
+          if (acc.remainingCredits) totalCredits += acc.remainingCredits;
+          
+          let statusBadge = `<span class="tag tag-active">Active</span>`;
+          if (!acc.enabled) statusBadge = `<span class="tag tag-disabled">Disabled</span>`;
+          else if (acc.status === 'cooling_down') statusBadge = `<span class="tag tag-cooling">Cooling Down</span>`;
+          else if (acc.status === 'quota_exhausted') statusBadge = `<span class="tag tag-exhausted">Quota Empty</span>`;
+
+          const creditsText = acc.remainingCredits !== null ? `${acc.remainingCredits} / ${acc.allowanceCredits || 500}` : 'Unknown';
+          const pct = acc.allowanceCredits ? Math.min(100, Math.round((acc.remainingCredits / acc.allowanceCredits) * 100)) : 100;
+
+          const adStatusHtml = acc.lastAdImpression ?
+            `<span style="color: var(--success); font-weight: 600;">✓ Active</span> <span style="font-size: 11px; color: var(--text-muted); display: block;">${new Date(acc.lastAdImpression).toLocaleTimeString()}</span>` :
+            `<button class="btn btn-secondary btn-sm" onclick="triggerAdImpression('${acc.id}')" style="font-size: 11px; padding: 3px 8px;">▶ Run Ad</button>`;
+
+          return `
+            <tr>
+              <td>
+                <div style="font-weight: 600;">${escapeHtml(acc.name)}</div>
+                <div style="font-size: 11px; font-family: monospace; color: var(--text-muted);">${acc.tokenMasked}</div>
+              </td>
+              <td>${statusBadge}</td>
+              <td>
+                <div style="font-size: 13px;">${creditsText}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
+              </td>
+              <td>${acc.totalRequests || 0}</td>
+              <td>${adStatusHtml}</td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary btn-sm" onclick="toggleAccount('${acc.id}', ${!acc.enabled})">${acc.enabled ? 'Disable' : 'Enable'}</button>
+                  <button class="btn btn-secondary btn-sm" onclick="refreshAccount('${acc.id}')">Refresh</button>
+                  <button class="btn btn-secondary btn-sm" title="Keepalive Ad Impression" onclick="triggerAdImpression('${acc.id}')">Ad</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteAccount('${acc.id}')">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        document.getElementById('statRemainingCredits').innerText = totalCredits.toLocaleString();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function toggleAccount(id, enabled) {
+      await fetch(`/api/accounts/${id}/toggle`, {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ enabled })
+      });
+      fetchStatus();
+    }
+
+    async function refreshAccount(id) {
+      await fetch(`/api/accounts/${id}/refresh`, { method: 'POST', headers: getAdminHeaders() });
+      fetchStatus();
+    }
+
+    async function deleteAccount(id) {
+      if (!confirm('Are you sure you want to remove this account from the pool?')) return;
+      await fetch(`/api/accounts/${id}`, { method: 'DELETE', headers: getAdminHeaders() });
+      fetchStatus();
+    }
+
+    async function triggerAdImpression(id) {
+      const res = await fetch(`/api/accounts/${id}/ad-impression`, { method: 'POST', headers: getAdminHeaders() });
+      if (res.ok) fetchStatus();
+    }
+
+    // OAuth Login Modal
+    function openOAuthLoginModal() {
+      document.getElementById('oauthModal').style.display = 'flex';
+      document.getElementById('oauthLabelGroup').style.display = 'block';
+      document.getElementById('oauthLoadingState').style.display = 'none';
+      document.getElementById('oauthSuccessState').style.display = 'none';
+      const btn = document.getElementById('btnStartOAuth');
+      btn.style.display = 'inline-flex';
+      btn.innerText = 'Authorize with GitHub';
+      btn.disabled = false;
+      document.getElementById('oauthAccName').value = '';
+      if (oauthPollTimer) clearInterval(oauthPollTimer);
+    }
+
+    function closeOAuthLoginModal() {
+      document.getElementById('oauthModal').style.display = 'none';
+      if (oauthPollTimer) clearInterval(oauthPollTimer);
+    }
+
+    async function executeOAuthStart() {
+      const label = document.getElementById('oauthAccName').value.trim();
+      const btn = document.getElementById('btnStartOAuth');
+      btn.disabled = true;
+      btn.innerText = 'Connecting...';
+
+      try {
+        const res = await fetch('/api/auth/connect/start', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ label })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to start login');
+
+        document.getElementById('oauthLabelGroup').style.display = 'none';
+        btn.style.display = 'none';
+        const loadingState = document.getElementById('oauthLoadingState');
+        loadingState.style.display = 'block';
+
+        if (data.confirmCode) {
+          const codeBox = document.getElementById('oauthCodeBox');
+          codeBox.innerText = data.confirmCode;
+          codeBox.style.display = 'block';
+        }
+
+        document.getElementById('oauthFallbackLink').href = data.connectUrl;
+        window.open(data.connectUrl, '_blank');
+
+        oauthPollTimer = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/auth/connect/status?sessionId=${data.sessionId}`, { headers: getAdminHeaders() });
+            const statusData = await statusRes.json();
+
+            if (statusData.status === 'completed') {
+              clearInterval(oauthPollTimer);
+              loadingState.style.display = 'none';
+              const successState = document.getElementById('oauthSuccessState');
+              successState.style.display = 'block';
+              document.getElementById('oauthSuccessMsg').innerText = `Connected: ${statusData.account.name}!`;
+
+              fetchStatus();
+              setTimeout(() => { closeOAuthLoginModal(); }, 2500);
+            } else if (statusData.status === 'failed' || statusData.status === 'denied' || statusData.status === 'expired') {
+              clearInterval(oauthPollTimer);
+              alert('Login error: ' + (statusData.error || 'Authorization was not completed.'));
+              closeOAuthLoginModal();
+            }
+          } catch (e) {}
+        }, 1500);
+
+      } catch (err) {
+        alert('Error: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'Authorize with GitHub';
+      }
+    }
+
+    // Manual Token Modal
+    function openAddAccountModal() {
+      document.getElementById('addAccountModal').style.display = 'flex';
+      document.getElementById('accName').value = '';
+      document.getElementById('accToken').value = '';
+    }
+
+    function closeAddAccountModal() {
+      document.getElementById('addAccountModal').style.display = 'none';
+    }
+
+    async function saveNewAccount() {
+      const name = document.getElementById('accName').value.trim();
+      const token = document.getElementById('accToken').value.trim();
+      if (!token) return alert('Please paste a FreePi token (JWT).');
+
+      const btn = document.getElementById('btnSaveAccount');
+      btn.innerText = 'Verifying...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/accounts', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ name, token })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to add account');
+        closeAddAccountModal();
+        fetchStatus();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.innerText = 'Verify & Save';
+        btn.disabled = false;
+      }
+    }
+
+    // Models & Catalog
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/models', { headers: getAdminHeaders() });
+        const data = await res.json();
+        if (data.data && Array.isArray(data.data)) {
+          allModelsList = data.data;
+          document.getElementById('modelsCountBadge').innerText = allModelsList.length;
+
+          const select = document.getElementById('playgroundModel');
+          const currentVal = select.value;
+          select.innerHTML = allModelsList.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+          if (currentVal && allModelsList.some(m => m.id === currentVal)) {
+            select.value = currentVal;
+          }
+
+          renderModelsCatalog(allModelsList);
+        }
+      } catch (e) {}
+    }
+
+    function renderModelsCatalog(models) {
+      const container = document.getElementById('modelsGridContainer');
+      const activeModel = document.getElementById('playgroundModel').value;
+
+      container.innerHTML = models.map(m => {
+        const isSelected = m.id === activeModel ? 'selected' : '';
+        let tag = 'General';
+        if (m.id.includes('flash')) tag = '⚡ Flash';
+        else if (m.id.includes('pro')) tag = '🧠 Pro';
+        else if (m.id.includes('uncensored') || m.id.includes('abliterated')) tag = '🔓 Uncensored';
+
+        return `
+          <div class="model-card ${isSelected}" onclick="selectModelFromCatalog('${m.id}')">
+            <div>
+              <div class="model-name">${m.id}</div>
+              <div class="model-meta">Provider: ${m.owned_by || 'freepi'}</div>
+            </div>
+            <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="tag" style="background: rgba(59, 130, 246, 0.15); color: #38bdf8;">${tag}</span>
+              <span style="font-size: 11px; color: var(--text-muted);">Click to select</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectModelFromCatalog(modelId) {
+      document.getElementById('playgroundModel').value = modelId;
+      renderModelsCatalog(allModelsList);
+      document.getElementById('playgroundInput').focus();
+    }
+
+    function filterModelsCatalog() {
+      const query = document.getElementById('modelSearchInput').value.toLowerCase().trim();
+      if (!query) {
+        renderModelsCatalog(allModelsList);
+        return;
+      }
+      const filtered = allModelsList.filter(m => m.id.toLowerCase().includes(query));
+      renderModelsCatalog(filtered);
+    }
+
+    // Playground Chat
+    async function sendPlaygroundMessage() {
+      const input = document.getElementById('playgroundInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const model = document.getElementById('playgroundModel').value;
+      const system = document.getElementById('playgroundSystem').value.trim();
+      const stream = document.getElementById('streamToggle').checked;
+      const temperature = parseFloat(document.getElementById('tempSlider').value);
+
+      input.value = '';
+      
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerHTML += `<div class="chat-bubble chat-user">${escapeHtml(text)}</div>`;
+      
+      const assistantBubble = document.createElement('div');
+      assistantBubble.className = 'chat-bubble chat-assistant';
+      assistantBubble.innerText = '...';
+      chatBox.appendChild(assistantBubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const btn = document.getElementById('btnPlaygroundSend');
+      btn.disabled = true;
+
+      const messages = [];
+      if (system) messages.push({ role: 'system', content: system });
+      messages.push({ role: 'user', content: text });
+
+      try {
+        const res = await fetch('/v1/chat/completions', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ model, messages, stream, temperature })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          assistantBubble.innerText = 'Error (' + res.status + '): ' + (errData.error?.message || res.statusText);
+          return;
+        }
+
+        if (stream) {
+          assistantBubble.innerText = '';
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('data: ')) {
+                const dataStr = trimmed.slice(6);
+                if (dataStr === '[DONE]') break;
+                try {
+                  const parsed = JSON.parse(dataStr);
+                  const delta = parsed.choices?.[0]?.delta?.content || '';
+                  assistantBubble.innerText += delta;
+                  chatBox.scrollTop = chatBox.scrollHeight;
+                } catch (e) {}
+              }
+            }
+          }
+        } else {
+          const completion = await res.json();
+          assistantBubble.innerText = completion.choices?.[0]?.message?.content || JSON.stringify(completion);
+        }
+      } catch (err) {
+        assistantBubble.innerText = 'Failed: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        fetchStatus();
+      }
+    }
+
+    // Settings
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/config', { headers: getAdminHeaders() });
+        if (res.status === 401) return;
+        const data = await res.json();
+        document.getElementById('cfgBridgeKey').value = data.bridgeApiKey || '';
+        document.getElementById('cfgRetentionDays').value = data.logRetentionDays || '10';
+        document.getElementById('cfgAutoAd').checked = data.autoAd !== false;
+      } catch (e) {}
+    }
+
+    async function saveBridgeKey() {
+      const key = document.getElementById('cfgBridgeKey').value.trim();
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ bridgeApiKey: key })
+        });
+        if (res.ok) {
+          alert('Bridge API Key saved successfully!');
+          fetchStatus();
+          updateDocsSnippets();
+        }
+      } catch (e) { alert(e.message); }
+    }
+
+    async function saveAdminKey() {
+      const key = document.getElementById('cfgAdminKey').value.trim();
+      if (!key) return alert('Please enter an admin password, or click Disable Security.');
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ adminPassword: key })
+        });
+        if (res.ok) {
+          currentAdminKey = key;
+          localStorage.setItem('freepi_admin_key', key);
+          alert('Admin Dashboard Key updated! Dashboard is now locked and protected.');
+          checkAdminGate();
+          document.getElementById('cfgAdminKey').value = '';
+        }
+      } catch (e) { alert(e.message); }
+    }
+
+    async function clearAdminKey() {
+      if (!confirm('Disable admin security? The dashboard at / will be publicly accessible.')) return;
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ adminPassword: '' })
+        });
+        if (res.ok) {
+          currentAdminKey = '';
+          localStorage.removeItem('freepi_admin_key');
+          alert('Admin security disabled. Dashboard is now open.');
+          checkAdminGate();
+        }
+      } catch (e) { alert(e.message); }
+    }
+
+    async function saveMaintenanceSettings() {
+      const days = parseInt(document.getElementById('cfgRetentionDays').value, 10) || 10;
+      const autoAd = document.getElementById('cfgAutoAd').checked;
+      try {
+        await fetch('/api/config', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify({ logRetentionDays: days, autoAd })
+        });
+        alert('Maintenance settings saved.');
+        fetchStatus();
+      } catch (e) { alert(e.message); }
+    }
+
+    // Documentation Snippets Update
+    function updateDocsSnippets() {
+      const origin = window.location.origin;
+      const bridgeKey = document.getElementById('cfgBridgeKey')?.value.trim() || 'sk-freepi';
+
+      document.querySelectorAll('.doc-base-url').forEach(el => el.innerText = origin);
+      document.querySelectorAll('.doc-api-key').forEach(el => el.innerText = bridgeKey);
+    }
+
+    function copySnippet(btn) {
+      const snippet = btn.parentElement.innerText.replace('Copy', '').trim();
+      navigator.clipboard.writeText(snippet);
+      btn.innerText = 'Copied!';
+      setTimeout(() => btn.innerText = 'Copy', 2000);
+    }
+
+    // Logs
+    async function fetchLogs() {
+      const level = document.getElementById('logLevelFilter').value;
+      const search = document.getElementById('logSearch').value;
+      try {
+        const res = await fetch(`/api/logs?level=${level}&search=${encodeURIComponent(search)}`, { headers: getAdminHeaders() });
+        const data = await res.json();
+        const term = document.getElementById('logsTerminal');
+        if (!data.logs || data.logs.length === 0) {
+          term.innerHTML = '<span style="color: #64748b;">No logs recorded.</span>';
+          return;
+        }
+
+        term.innerHTML = data.logs.map(l => {
+          return `<div class="log-line"><span class="log-time">[${l.timestamp.slice(11, 19)}]</span> <span class="log-${l.level}">[${l.level}]</span> ${escapeHtml(l.message)}</div>`;
+        }).join('');
+      } catch (e) {}
+    }
+
+    async function clearServerLogs() {
+      if (!confirm('Clear recent in-memory logs?')) return;
+      await fetch('/api/logs/clear', { method: 'POST', headers: getAdminHeaders() });
+      fetchLogs();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Init
+    checkAdminGate().then(() => {
+      fetchStatus();
+      loadModels();
+      loadSettings();
+      updateDocsSnippets();
+    });
+    setInterval(fetchStatus, 8000);
+  </script>
+</body>
+</html>
